@@ -1,6 +1,4 @@
 import 'dart:async';
-
-import 'package:async/async.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
@@ -55,7 +53,9 @@ class ObjectProvider extends ChangeNotifier {
   ObjectProvider()
       : id = const Uuid().v4(),
         _cheapObject = CheapObject(),
-        _expensiveObject = ExpensiveObject();
+        _expensiveObject = ExpensiveObject() {
+    start();
+  }
 
   @override
   void notifyListeners() {
@@ -72,7 +72,7 @@ class ObjectProvider extends ChangeNotifier {
     });
 
     _expensiveObjectStreamSubs = Stream.periodic(
-      const Duration(seconds: 1),
+      const Duration(seconds: 10),
     ).listen((_) {
       _expensiveObject = ExpensiveObject();
       notifyListeners();
@@ -93,6 +93,107 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Home Page'),
+      ),
+      body: Column(
+        children: [
+          const Row(
+            children: [
+              Expanded(
+                child: CheapWidget(),
+              ),
+              Expanded(
+                child: ExpensiveWidget(),
+              ),
+            ],
+          ),
+          const Row(
+            children: [
+              Expanded(
+                child: ObjectProviderWidget(),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              TextButton(
+                onPressed: () {
+                  context.read<ObjectProvider>().stop();
+                },
+                child: const Text('Stop'),
+              ),
+              TextButton(
+                onPressed: () {
+                  context.read<ObjectProvider>().start();
+                },
+                child: const Text('Start'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ExpensiveWidget extends StatelessWidget {
+  const ExpensiveWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final expensiveObject = context.select<ObjectProvider, ExpensiveObject>(
+      (provider) => provider.expensiveObject,
+    );
+    return Container(
+      height: 100,
+      color: Colors.blue,
+      child: Column(
+        children: [
+          const Text('Expensive Widget'),
+          const Text('Last update'),
+          Text(expensiveObject.lastUpdated),
+        ],
+      ),
+    );
+  }
+}
+
+class CheapWidget extends StatelessWidget {
+  const CheapWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final cheapObject = context.select<ObjectProvider, CheapObject>(
+      (provider) => provider.cheapObject,
+    );
+    return Container(
+      height: 100,
+      color: Colors.yellow,
+      child: Column(
+        children: [
+          const Text('Cheap Widget'),
+          const Text('Last update'),
+          Text(cheapObject.lastUpdated),
+        ],
+      ),
+    );
+  }
+}
+
+class ObjectProviderWidget extends StatelessWidget {
+  const ObjectProviderWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = context.watch<ObjectProvider>();
+    return Container(
+      height: 100,
+      color: Colors.purple,
+      child: Column(
+        children: [
+          const Text('Object Provider Object'),
+          const Text('ID'),
+          Text(provider.id),
+        ],
       ),
     );
   }
